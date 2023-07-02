@@ -1,6 +1,7 @@
 # https://docs.docker.com/compose/environment-variables/
 
-version: "2.4"
+version: "3.8"
+name: bf-mattermost
 
 services:
   postgres:
@@ -8,13 +9,12 @@ services:
     restart: ${RESTART_POLICY}
     security_opt:
       - no-new-privileges:true
-    pids_limit: 100
     read_only: true
     tmpfs:
       - /tmp
       - /var/run/postgresql
     volumes:
-      - ${POSTGRES_DATA_PATH}:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data
     environment:
       # timezone inside container
       - TZ
@@ -31,19 +31,18 @@ services:
     restart: ${RESTART_POLICY}
     security_opt:
       - no-new-privileges:true
-    pids_limit: 200
     read_only: ${MATTERMOST_CONTAINER_READONLY}
     tmpfs:
       - /tmp
     volumes:
-      - ${MATTERMOST_CONFIG_PATH}:/mattermost/config:rw
-      - ${MATTERMOST_DATA_PATH}:/mattermost/data:rw
-      - ${MATTERMOST_LOGS_PATH}:/mattermost/logs:rw
-      - ${MATTERMOST_PLUGINS_PATH}:/mattermost/plugins:rw
-      - ${MATTERMOST_CLIENT_PLUGINS_PATH}:/mattermost/client/plugins:rw
-      - ${MATTERMOST_BLEVE_INDEXES_PATH}:/mattermost/bleve-indexes:rw
+      - mm-config:/mattermost/config:rw
+      - mm-data:/mattermost/data:rw
+      - mm-logs:/mattermost/logs:rw
+      - mm-plugins:/mattermost/plugins:rw
+      - mm-client-plugins:/mattermost/client/plugins:rw
+      - mm-indexes:/mattermost/bleve-indexes:rw
       # When you want to use SSO with GitLab, you have to add the cert pki chain of GitLab inside Alpine
-      # to avoid Token request failed: certificate signed by unknown authority 
+      # to avoid Token request failed: certificate signed by unknown authority
       # (link: https://github.com/mattermost/mattermost-server/issues/13059 and https://github.com/mattermost/docker/issues/34)
       # - ${GITLAB_PKI_CHAIN_PATH}:/etc/ssl/certs/pki_chain.pem:ro
     environment:
@@ -59,8 +58,16 @@ services:
 
       # additional settings
       - MM_SERVICESETTINGS_SITEURL
-    ports:
-      - ${CALLS_PORT}:8443/udp
+      - MM_SERVICESETTINGS_ENABLERELIABLEWEBSOCKETS
+
+volumes:
+  db-data:
+  mm-config:
+  mm-data:
+  mm-logs:
+  mm-plugins:
+  mm-client-plugins:
+  mm-indexes:
 
 # If you use rolling image tags and feel lucky watchtower can automatically pull new images and
 # instantiate containers from it. https://containrrr.dev/watchtower/

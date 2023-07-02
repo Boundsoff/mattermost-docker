@@ -1,0 +1,19 @@
+version: "2.4"
+
+services:
+  mattermost:
+    networks:
+      - default
+      - proxy
+    extra_hosts:
+      - 'gitlab.local:172.28.5.1'
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.bf-mattermost.rule: "Host(`mattermost.local`)"
+      traefik.http.routers.bf-mattermost.tls: "true"
+      traefik.http.routers.bf-mattermost.tls.certresolver: "main"
+      traefik.http.services.bf-mattermost.loadbalancer.server.port: ${APP_PORT}
+
+networks:
+  proxy:
+    external: true
